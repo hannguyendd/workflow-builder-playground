@@ -8,6 +8,8 @@ class SetNodeBuilder(NodeBuilder[SetNode]):
         return SetNode(
             name=self.name,
             description=self.description,
+            variable=self.parameters.get("variable_name", ""),
+            value=self.parameters.get("value", ""),
             parameters=self.parameters,
         )
 

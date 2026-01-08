@@ -28,7 +28,7 @@ class WorkflowBuilder:
 
         node_map = {node.name: node for node in nodes}
         connections: list[NodeConnection] = []
-        for node_name, raw_conns in self.raw_connections:
+        for node_name, raw_conns in self.raw_connections.items():
             node_connections: list[NodeConnection] = []
             node = node_map.get(node_name)
             if not node:

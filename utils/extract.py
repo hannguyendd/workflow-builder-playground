@@ -6,5 +6,6 @@ def get_var(data: dict, var_name: str, default=None):
                 data = data[key]
             except TypeError:
                 data = data[int(key)]
+        return default
     except (KeyError, TypeError, ValueError):
         return default

@@ -13,13 +13,13 @@ class ConditionNode(BaseNode):
         name,
         description,
         condition: dict,  # json logic condition
-        connections=list[NodeConnection],
-        parameters={},
+        connections: list[NodeConnection] | None = None,
+        parameters: dict | None = None,
     ):
-        super().__init__(name, description, parameters, connections)
+        super().__init__(name, description, parameters or {}, connections or [])
 
         self.condition = condition
-        self.set_connections(connections)
+        self.set_connections(connections or [])
 
     def set_connections(self, connections):
         super().set_connections(connections)
@@ -36,7 +36,7 @@ class ConditionNode(BaseNode):
         pass
 
     async def next_nodes(self, state, variables):
-        data = {state, variables}
+        data = {**state, **variables}
         result = jsonLogic(self.condition, data)
         if result:
             return [self.true_node] if self.true_node else []

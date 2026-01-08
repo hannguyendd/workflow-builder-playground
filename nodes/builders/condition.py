@@ -4,10 +4,11 @@ from nodes.condition import ConditionNode
 
 
 class ConditionNodeBuilder(NodeBuilder[ConditionNode]):
-    def build(self) -> ConditionNode:
+    def create(self) -> ConditionNode:
         return ConditionNode(
             name=self.name,
             description=self.description,
+            condition=self.parameters.get("condition", {}),
             parameters=self.parameters,
         )
 

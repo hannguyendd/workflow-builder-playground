@@ -1,0 +1,65 @@
+{
+  "name": "Test Workflow - All Node Types",
+  "nodes": [
+    {
+      "name": "set_user_age",
+      "description": "Initialize user age",
+      "position": [0, 0],
+      "type": "set",
+      "parameters": {
+        "variable_name": "age",
+        "value": "25"
+      }
+    },
+    {
+      "name": "set_user_name",
+      "description": "Initialize user name",
+      "position": [0, 1],
+      "type": "set",
+      "parameters": {
+        "variable_name": "name",
+        "value": "John"
+      }
+    },
+    {
+      "name": "check_adult",
+      "description": "Check if user is 18 or older",
+      "position": [1, 0],
+      "type": "if",
+      "parameters": {
+        "condition": {
+          ">=": [{"var": "age"}, 18]
+        }
+      }
+    },
+    {
+      "name": "set_adult_status",
+      "description": "Mark user as adult",
+      "position": [2, 0],
+      "type": "set",
+      "parameters": {
+        "variable_name": "status",
+        "value": "adult"
+      }
+    },
+    {
+      "name": "set_minor_status",
+      "description": "Mark user as minor",
+      "position": [2, 1],
+      "type": "set",
+      "parameters": {
+        "variable_name": "status",
+        "value": "minor"
+      }
+    }
+  ],
+  "connections": {
+    "set_user_age": [
+      {"to": "check_adult", "label": "main"}
+    ],
+    "check_adult": [
+      {"to": "set_adult_status", "label": "true"},
+      {"to": "set_minor_status", "label": "false"}
+    ]
+  }
+}

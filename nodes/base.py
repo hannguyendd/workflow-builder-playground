@@ -38,7 +38,7 @@ class BaseNode:
     async def execute_async(self, state: dict, variables: dict, **kwargs):
         pass
 
-    def next_nodes(self, state: dict, variables: dict) -> list["BaseNode"]:
+    async def next_nodes(self, state: dict, variables: dict) -> list["BaseNode"]:
         return [conn.to for conn in self.connections]
 
     def set_connections(self, connections: list[NodeConnection]):
