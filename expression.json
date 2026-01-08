@@ -1,0 +1,38 @@
+{
+  "operator": "and",
+  "operands": [
+    {
+      "operator": ">=",
+      "left": "temperature",
+      "right": 20
+    },
+    {
+      "operator": "<=",
+      "left": "temperature",
+      "right": 30
+    },
+    {
+      "operator": "or",
+      "operands": [
+        {
+          "operator": "==",
+          "left": "humidity",
+          "right": 50
+        },
+        {
+          "operator": "==",
+          "left": "humidity",
+          "right": 60
+        }
+      ]
+    },
+    {
+      "operator": "not",
+      "operand": {
+        "operator": "==",
+        "left": "status",
+        "right": "error"
+      }
+    }
+  ]
+}

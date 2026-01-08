@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "type": "if",
+      "name": "Set Decision",
+      "parameters": {
+        "expression": "x > 10"
+      }
+    },
+    {
+      "id": "2",
+      "type": "set",
+      "name": "Set Value High",
+      "parameters": {
+        "variable": "value",
+        "value": "high"
+      }
+    },
+    {
+      "id": "3",
+      "type": "set",
+      "name": "Set Value Low",
+      "parameters": {
+        "variable": "value",
+        "value": "low"
+      }
+    }
+  ],
+  "connections": {
+    "Set Decision": [
+      {
+        "tail": "Set Value High",
+        "type": "true"
+      },
+      {
+        "tail": "Set Value Low",
+        "type": "false"
+      }
+    ]
+  }
+}
