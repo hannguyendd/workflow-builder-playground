@@ -12,7 +12,7 @@ class ConditionNode(BaseNode):
         self,
         name,
         description,
-        condition: dict,
+        condition: dict,  # json logic condition
         connections=list[NodeConnection],
         parameters={},
     ):
