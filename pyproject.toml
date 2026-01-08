@@ -1,0 +1,9 @@
+[project]
+name = "workflow-builder-playground"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "json-logic>=0.6.3",
+]
