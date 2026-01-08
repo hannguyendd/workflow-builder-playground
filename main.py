@@ -1,20 +1,39 @@
+import argparse
 import asyncio
 import json
 from workflows.builder import WorkflowBuilder
 
 
 def main():
-    with open("test_workflow.json") as f:
+    parser = argparse.ArgumentParser(description="Run a workflow from a JSON file")
+    parser.add_argument("workflow_file", help="Path to the workflow JSON file")
+    parser.add_argument(
+        "--var",
+        "-v",
+        action="append",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        help="Initial variable (can be used multiple times)",
+    )
+    args = parser.parse_args()
+
+    with open(args.workflow_file) as f:
         raw_workflow = json.load(f)
 
     builder = WorkflowBuilder(raw_workflow)
     workflow = builder.build()
 
     state = {}
-    variables = {"age": 25, "name": "John"}
+    variables = {}
+    if args.var:
+        for key, value in args.var:
+            # Try to parse as JSON, fallback to string
+            try:
+                variables[key] = json.loads(value)
+            except json.JSONDecodeError:
+                variables[key] = value
 
     print(f"Executing workflow: {workflow.name}")
-    print("--- First Run ---")
     print(f"Initial state: {state}")
     print(f"Initial variables: {variables}")
     print("-" * 40)
@@ -23,18 +42,6 @@ def main():
 
     print("-" * 40)
     print(f"Final state: {state}")
-    print("--- End of First Run ---")
-
-    print("\n\n--- Second Run with Different Variables ---")
-    state = {}
-    variables = {"age": 17, "name": "Alice"}
-    print(f"Initial state: {state}")
-    print(f"Initial variables: {variables}")
-    print("-" * 40)
-    asyncio.run(workflow.execute_async(state, variables))
-    print("-" * 40)
-    print(f"Final state: {state}")
-    print("--- End of Second Run ---")
 
 
 if __name__ == "__main__":

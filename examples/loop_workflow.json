@@ -1,0 +1,81 @@
+{
+  "name": "Loop Test Workflow",
+  "nodes": [
+    {
+      "name": "setup_items",
+      "description": "Initialize a list of items to process",
+      "position": [0, 0],
+      "type": "set",
+      "parameters": {
+        "variable_name": "items",
+        "value": ["apple", "banana", "cherry"]
+      }
+    },
+    {
+      "name": "init_count",
+      "description": "Initialize processed count",
+      "position": [0, 1],
+      "type": "set",
+      "parameters": {
+        "variable_name": "processed_count",
+        "value": 0
+      }
+    },
+    {
+      "name": "loop",
+      "description": "Loop through all items",
+      "position": [1, 0],
+      "type": "for",
+      "parameters": {
+        "collection": "items",
+        "iterator_var": "current_item",
+        "index_var": "index"
+      }
+    },
+    {
+      "name": "store_item",
+      "description": "Store the current item being processed",
+      "position": [2, 0],
+      "type": "set",
+      "parameters": {
+        "variable_name": "last_processed",
+        "value": "current_item"
+      }
+    },
+    {
+      "name": "end_loop",
+      "description": "End of loop body",
+      "position": [3, 0],
+      "type": "end_loop",
+      "parameters": {}
+    },
+    {
+      "name": "mark_complete",
+      "description": "Mark workflow as complete",
+      "position": [4, 0],
+      "type": "set",
+      "parameters": {
+        "variable_name": "status",
+        "value": "completed"
+      }
+    }
+  ],
+  "connections": {
+    "setup_items": [
+      {"to": "init_count", "label": "main"}
+    ],
+    "init_count": [
+      {"to": "loop", "label": "main"}
+    ],
+    "loop": [
+      {"to": "store_item", "label": "body"},
+      {"to": "mark_complete", "label": "exit"}
+    ],
+    "store_item": [
+      {"to": "end_loop", "label": "main"}
+    ],
+    "end_loop": [
+      {"to": "loop", "label": "main"}
+    ]
+  }
+}

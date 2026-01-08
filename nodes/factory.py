@@ -11,6 +11,14 @@ class NodeFactory:
             from nodes.builders.condition import ConditionNodeBuilder
 
             return ConditionNodeBuilder
+        elif node_type == "for":
+            from nodes.builders.loop import ForLoopNodeBuilder
+
+            return ForLoopNodeBuilder
+        elif node_type == "end_loop":
+            from nodes.builders.loop import EndLoopNodeBuilder
+
+            return EndLoopNodeBuilder
         else:
             raise ValueError(f"Unknown node type: {node_type}")
 
