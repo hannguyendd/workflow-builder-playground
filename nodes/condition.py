@@ -19,10 +19,10 @@ class ConditionNode(BaseNode):
         super().__init__(name, description, parameters or {}, connections or [])
 
         self.condition = condition
-        self.set_connections(connections or [])
+        self.link(connections or [])
 
-    def set_connections(self, connections):
-        super().set_connections(connections)
+    def link(self, connections):
+        super().link(connections)
 
         self.true_node = next(
             (conn.to for conn in self.connections if conn.label == "true"), None

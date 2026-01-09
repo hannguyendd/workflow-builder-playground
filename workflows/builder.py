@@ -39,7 +39,7 @@ class WorkflowBuilder:
                 connections.append(connection)
                 node_connections.append(connection)
 
-            node.set_connections(node_connections)
+            node.link(node_connections)
 
         workflow = Workflow(nodes, connections)
         workflow.name = self.name

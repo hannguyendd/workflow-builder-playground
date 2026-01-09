@@ -26,13 +26,13 @@ class ForLoopNode(BaseNode):
         self.body_node: BaseNode | None = None
         self.exit_node: BaseNode | None = None
 
-        self.set_connections(connections or [])
+        self.link(connections or [])
 
     def _get_loop_key(self) -> str:
         return f"__loop_{self.name}"
 
-    def set_connections(self, connections: list[NodeConnection]):
-        super().set_connections(connections)
+    def link(self, connections: list[NodeConnection]):
+        super().link(connections)
 
         self.body_node = next(
             (conn.to for conn in self.connections if conn.label == "body"), None

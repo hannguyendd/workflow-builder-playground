@@ -41,7 +41,7 @@ class BaseNode:
     async def next_nodes(self, state: dict, variables: dict) -> list["BaseNode"]:
         return [conn.to for conn in self.connections]
 
-    def set_connections(self, connections: list[NodeConnection]):
+    def link(self, connections: list[NodeConnection]):
         self.connections = connections
 
     @abstractmethod
