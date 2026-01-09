@@ -1,7 +1,7 @@
 [project]
 name = "workflow-builder-playground"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Python workflow builder for defining and executing workflows composed of connected nodes"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

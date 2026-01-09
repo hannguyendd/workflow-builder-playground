@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Python-based workflow builder that enables defining, constructing, and executing workflows composed of connected nodes. Uses async execution patterns and builder pattern for workflow construction.
+A Python workflow builder for defining, constructing, and executing workflows composed of connected nodes. Uses async execution with parallel processing and builder pattern for type-safe node construction.
 
 ## Commands
 
@@ -12,24 +12,20 @@ A Python-based workflow builder that enables defining, constructing, and executi
 # Install dependencies
 uv sync
 
-# Run the project (runs default workflow)
+# Run the default workflow
 uv run python main.py
 
-# Run with a specific workflow file
+# Run a specific workflow file
 uv run python main.py examples/loop_workflow.json
 
 # Run with initial variables
 uv run python main.py examples/test_workflow.json -v '{"user": {"name": "Alice"}}'
-
-# Run a specific Python file
-uv run python <file.py>
 ```
 
 ## Architecture
 
-### Core Concepts
+### Execution Flow
 
-**Workflow Execution Flow:**
 1. JSON workflow definition → `WorkflowBuilder` parses raw data
 2. `NodeFactory` creates typed nodes via builders (validates parameters)
 3. `ConnectionBuilder` links nodes by name with labeled edges
@@ -47,15 +43,17 @@ uv run python <file.py>
 **BaseNode** (`nodes/base.py`): Abstract base with `execute_async()`, `next_nodes()`, `set_connections()`
 
 **Node Types:**
-- `"set"` → `SetNode` (`nodes/assignment.py`): Variable assignment via `variable_name` and `value` parameters. Values can reference other variables using dot notation.
-- `"if"` → `ConditionNode` (`nodes/condition.py`): Conditional branching using JSON Logic; uses "true"/"false" labeled connections. Does not execute logic itself, only determines next nodes.
-- `"for"` → `ForLoopNode` (`nodes/loop.py`): Iteration over collections with `collection`, `iterator_var`, and optional `index_var` parameters. Uses "body"/"exit" labeled connections.
-- `"end_loop"` → `EndLoopNode` (`nodes/loop.py`): Marks end of loop body, increments loop index, returns control to ForLoopNode.
+| Type | Class | File | Description |
+|------|-------|------|-------------|
+| `set` | `SetNode` | `nodes/assignment.py` | Variable assignment via `variable_name` and `value` parameters |
+| `if` | `ConditionNode` | `nodes/condition.py` | Conditional branching using JSON Logic; uses "true"/"false" labeled connections |
+| `for` | `ForLoopNode` | `nodes/loop.py` | Iteration with `collection`, `iterator_var`, and optional `index_var`; uses "body"/"exit" connections |
+| `end_loop` | `EndLoopNode` | `nodes/loop.py` | Marks end of loop body, increments index, returns control to ForLoopNode |
 
-**Connections** (`nodes/connection.py`): `NodeConnection(to, label)` with labeled edges:
-- `"main"`: Default flow (SetNode, general)
-- `"true"` / `"false"`: ConditionNode branches
-- `"body"` / `"exit"`: ForLoopNode branches
+**Connection Labels** (`nodes/connection.py`):
+- `main`: Default flow (SetNode, general)
+- `true` / `false`: ConditionNode branches
+- `body` / `exit`: ForLoopNode branches
 
 ### State Management
 
@@ -99,8 +97,7 @@ workflow-builder-playground/
 ├── examples/                       # Example workflows
 │   ├── test_workflow.json          # Basic set/if nodes example
 │   └── loop_workflow.json          # ForLoop/EndLoop example
-├── main.py                         # CLI entry point
-└── pyproject.toml                  # Dependencies (uv)
+└── main.py                         # CLI entry point
 ```
 
 ## Adding New Node Types
