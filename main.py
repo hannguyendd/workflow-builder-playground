@@ -1,7 +1,9 @@
 import argparse
 import asyncio
 import json
+
 from workflows.builder import WorkflowBuilder
+from workflows.context import ExecutionContext
 
 
 def main():
@@ -13,7 +15,13 @@ def main():
         action="append",
         nargs=2,
         metavar=("KEY", "VALUE"),
-        help="Initial variable (can be used multiple times)",
+        help="Initial state variable (can be used multiple times)",
+    )
+    parser.add_argument(
+        "--config",
+        "-c",
+        type=str,
+        help="Path to config JSON file",
     )
     args = parser.parse_args()
 
@@ -24,24 +32,31 @@ def main():
     workflow = builder.build()
 
     state = {}
-    variables = {}
     if args.var:
         for key, value in args.var:
             # Try to parse as JSON, fallback to string
             try:
-                variables[key] = json.loads(value)
+                state[key] = json.loads(value)
             except json.JSONDecodeError:
-                variables[key] = value
+                state[key] = value
+
+    config = {}
+    if args.config:
+        with open(args.config) as f:
+            config = json.load(f)
+
+    ctx = ExecutionContext(state=state, config=config)
 
     print(f"Executing workflow: {workflow.name}")
-    print(f"Initial state: {state}")
-    print(f"Initial variables: {variables}")
+    print(f"Initial state: {ctx.state}")
+    print(f"Config: {ctx.config}")
     print("-" * 40)
 
-    asyncio.run(workflow.execute_async(state, variables))
+    asyncio.run(workflow.execute_async(ctx))
 
     print("-" * 40)
-    print(f"Final state: {state}")
+    print(f"Final state: {ctx.state}")
+    print(f"Node context: {ctx.node_context}")
 
 
 if __name__ == "__main__":

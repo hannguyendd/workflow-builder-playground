@@ -1,6 +1,10 @@
+from typing import TYPE_CHECKING
+
 from nodes.base import BaseNode
-from nodes.connection import NodeConnection
-from utils.extract import get_var
+from nodes.connection import ConnectionLabel, NodeConnection
+
+if TYPE_CHECKING:
+    from workflows.context import ExecutionContext
 
 
 class ForLoopNode(BaseNode):
@@ -8,12 +12,18 @@ class ForLoopNode(BaseNode):
     description: str
     type: str = "for"
 
+    # Keys for node_context storage
+    LOOP_INDEX_KEY = "__index"
+    LOOP_COLLECTION_KEY = "__collection"
+    ITEM_KEY = "item"
+    INDEX_KEY = "index"
+
     def __init__(
         self,
         name: str,
         description: str,
         collection: str,
-        iterator_var: str,
+        iterator_var: str | None = None,
         index_var: str | None = None,
         connections: list[NodeConnection] | None = None,
         parameters: dict | None = None,
@@ -21,79 +31,79 @@ class ForLoopNode(BaseNode):
         super().__init__(name, description, parameters or {}, connections or [])
 
         self.collection = collection
-        self.iterator_var = iterator_var
-        self.index_var = index_var
+        self.iterator_var = iterator_var  # Optional: also store in state for backward compat
+        self.index_var = index_var  # Optional: also store in state for backward compat
         self.body_node: BaseNode | None = None
         self.exit_node: BaseNode | None = None
 
         self.link(connections or [])
 
-    def _get_loop_key(self) -> str:
-        return f"__loop_{self.name}"
-
     def link(self, connections: list[NodeConnection]):
         super().link(connections)
 
         self.body_node = next(
-            (conn.to for conn in self.connections if conn.label == "body"), None
+            (conn.to for conn in self.connections if conn.label == ConnectionLabel.BODY),
+            None,
         )
         self.exit_node = next(
-            (conn.to for conn in self.connections if conn.label == "exit"), None
+            (conn.to for conn in self.connections if conn.label == ConnectionLabel.EXIT),
+            None,
         )
 
-    async def execute_async(self, state: dict, variables: dict, **kwargs):
-        loop_key = self._get_loop_key()
+    async def execute_async(self, ctx: "ExecutionContext") -> None:
+        node_ctx = ctx.get_node_context(self.name)
 
         # Initialize loop state on first call
-        if loop_key not in state:
-            combined_data = {**state, **variables}
-            collection = get_var(combined_data, self.collection, self.collection)
+        if self.LOOP_INDEX_KEY not in node_ctx:
+            # Get collection from context path
+            collection = ctx.get(self.collection, None)
 
-            # If collection is still a string, try to get it directly from combined_data
-            if isinstance(collection, str):
-                collection = combined_data.get(collection, [])
+            # If not found, try as literal
+            if collection is None:
+                collection = []
 
             if not isinstance(collection, (list, tuple)):
                 collection = []
 
-            state[loop_key] = {
-                "index": 0,
-                "collection": list(collection),
-            }
+            ctx.set_node_context(
+                self.name,
+                {
+                    self.LOOP_INDEX_KEY: 0,
+                    self.LOOP_COLLECTION_KEY: list(collection),
+                },
+            )
+            node_ctx = ctx.get_node_context(self.name)
 
-        # Set iterator and index variables for current iteration
-        # Store in state so they persist across levels (variables are copied per level)
-        loop_state = state[loop_key]
-        index = loop_state["index"]
-        collection = loop_state["collection"]
+        # Set current item and index in node_context
+        index = node_ctx[self.LOOP_INDEX_KEY]
+        collection = node_ctx[self.LOOP_COLLECTION_KEY]
 
         if index < len(collection):
-            state[self.iterator_var] = collection[index]
+            ctx.update_node_context(self.name, self.ITEM_KEY, collection[index])
+            ctx.update_node_context(self.name, self.INDEX_KEY, index)
+
+            # Backward compatibility: also set in state if iterator_var/index_var specified
+            if self.iterator_var:
+                ctx.set(self.iterator_var, collection[index])
             if self.index_var:
-                state[self.index_var] = index
+                ctx.set(self.index_var, index)
 
-    async def next_nodes(self, state: dict, variables: dict) -> list[BaseNode]:
-        loop_key = self._get_loop_key()
-        loop_state = state.get(loop_key)
+    async def next_nodes(self, ctx: "ExecutionContext") -> list[BaseNode]:
+        node_ctx = ctx.get_node_context(self.name)
 
-        if not loop_state:
+        if not node_ctx or self.LOOP_INDEX_KEY not in node_ctx:
             # No loop state, exit
             return [self.exit_node] if self.exit_node else []
 
-        index = loop_state["index"]
-        collection = loop_state["collection"]
+        index = node_ctx[self.LOOP_INDEX_KEY]
+        collection = node_ctx[self.LOOP_COLLECTION_KEY]
 
         if index < len(collection):
             # More items to iterate
             return [self.body_node] if self.body_node else []
         else:
             # Loop complete, clean up and exit
-            del state[loop_key]
-            # Clean up iterator variables
-            if self.iterator_var in state:
-                del state[self.iterator_var]
-            if self.index_var and self.index_var in state:
-                del state[self.index_var]
+            ctx.clear_node_context(self.name)
             return [self.exit_node] if self.exit_node else []
 
     def to_dict(self) -> dict:
@@ -119,16 +129,16 @@ class EndLoopNode(BaseNode):
     ):
         super().__init__(name, description, parameters or {}, connections or [])
 
-    async def execute_async(self, state: dict, variables: dict, **kwargs):
+    async def execute_async(self, ctx: "ExecutionContext") -> None:
         # Find the loop node from connections and increment its counter
         for conn in self.connections:
             if isinstance(conn.to, ForLoopNode):
-                loop_key = conn.to._get_loop_key()
-                if loop_key in state:
-                    state[loop_key]["index"] += 1
+                node_ctx = ctx.get_node_context(conn.to.name)
+                if node_ctx and ForLoopNode.LOOP_INDEX_KEY in node_ctx:
+                    node_ctx[ForLoopNode.LOOP_INDEX_KEY] += 1
                 break
 
-    async def next_nodes(self, state: dict, variables: dict) -> list[BaseNode]:
+    async def next_nodes(self, ctx: "ExecutionContext") -> list[BaseNode]:
         return [conn.to for conn in self.connections if conn.to]
 
     def to_dict(self) -> dict:

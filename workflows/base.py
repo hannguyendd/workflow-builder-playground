@@ -2,6 +2,7 @@ import asyncio
 from typing import TypedDict
 from nodes.base import BaseNode, RawNode
 from nodes.connection import NodeConnection, RawConnection
+from workflows.context import ExecutionContext
 
 
 class RawWorkflow(TypedDict):
@@ -22,22 +23,43 @@ class Workflow:
 
         return start_nodes
 
-    async def execute_async(self, state: dict, variables: dict, **kwarg):
+    async def execute_async(
+        self,
+        ctx: ExecutionContext | None = None,
+        state: dict | None = None,
+        config: dict | None = None,
+    ) -> ExecutionContext:
+        """
+        Execute the workflow asynchronously.
+
+        Args:
+            ctx: Optional ExecutionContext. If not provided, one will be created.
+            state: Optional initial state (used if ctx is not provided).
+            config: Optional config (used if ctx is not provided).
+
+        Returns:
+            The ExecutionContext after workflow completion.
+        """
+        if ctx is None:
+            ctx = ExecutionContext(
+                state=state or {},
+                config=config or {},
+            )
+
         nodes_to_exe = self.get_start_nodes()
         coroutine_list = []
-        while nodes_to_exe:
-            clone_variables = variables.copy()
 
+        while nodes_to_exe:
             for node in nodes_to_exe:
-                coroutine_list.append(
-                    node.execute_async(state, clone_variables, **kwarg)
-                )
+                coroutine_list.append(node.execute_async(ctx))
 
             await asyncio.gather(*coroutine_list)
 
             next_nodes = []
             for node in nodes_to_exe:
-                next_nodes.extend(await node.next_nodes(state, clone_variables))
+                next_nodes.extend(await node.next_nodes(ctx))
 
             nodes_to_exe = next_nodes
             coroutine_list = []
+
+        return ctx

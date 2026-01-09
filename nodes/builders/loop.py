@@ -17,9 +17,7 @@ class ForLoopNodeBuilder(NodeBuilder[ForLoopNode]):
     def get_errors(self) -> Generator[str, None, None]:
         if "collection" not in self.parameters:
             yield "Missing 'collection' parameter"
-
-        if "iterator_var" not in self.parameters:
-            yield "Missing 'iterator_var' parameter"
+        # iterator_var is optional - nodes can access via node_context (e.g., "loop_node.item")
 
 
 class EndLoopNodeBuilder(NodeBuilder[EndLoopNode]):

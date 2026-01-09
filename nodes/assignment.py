@@ -1,6 +1,10 @@
+from typing import TYPE_CHECKING
+
 from nodes.base import BaseNode
 from nodes.connection import NodeConnection
-from utils.extract import get_var
+
+if TYPE_CHECKING:
+    from workflows.context import ExecutionContext
 
 
 class SetNode(BaseNode):
@@ -22,12 +26,10 @@ class SetNode(BaseNode):
         self.variable_name = variable
         self.value = value
 
-    async def execute_async(self, state: dict, variables: dict, **kwargs):
-        # Implement the asynchronous execution logic for setting a variable
-        # Try to extract from combined state/variables, fallback to literal value
-        combined_data = {**state, **variables}
-        extracted_value = get_var(combined_data, self.value, self.value)
-        state[self.variable_name] = extracted_value
+    async def execute_async(self, ctx: "ExecutionContext") -> None:
+        # Try to extract from context, fallback to literal value
+        extracted_value = ctx.get(self.value, self.value)
+        ctx.set(self.variable_name, extracted_value)
 
     def to_dict(self) -> dict:
         return {

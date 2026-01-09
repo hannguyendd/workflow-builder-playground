@@ -1,7 +1,18 @@
+from enum import StrEnum
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
     from nodes.base import BaseNode
+
+
+class ConnectionLabel(StrEnum):
+    """Constants for connection labels to avoid typos."""
+
+    MAIN = "main"
+    TRUE = "true"
+    FALSE = "false"
+    BODY = "body"
+    EXIT = "exit"
 
 
 class RawConnection(TypedDict):

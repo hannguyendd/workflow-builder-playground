@@ -1,6 +1,12 @@
-from nodes.base import BaseNode
-from nodes.connection import NodeConnection
+from typing import TYPE_CHECKING
+
 from json_logic import jsonLogic
+
+from nodes.base import BaseNode
+from nodes.connection import ConnectionLabel, NodeConnection
+
+if TYPE_CHECKING:
+    from workflows.context import ExecutionContext
 
 
 class ConditionNode(BaseNode):
@@ -25,18 +31,21 @@ class ConditionNode(BaseNode):
         super().link(connections)
 
         self.true_node = next(
-            (conn.to for conn in self.connections if conn.label == "true"), None
+            (conn.to for conn in self.connections if conn.label == ConnectionLabel.TRUE),
+            None,
         )
         self.false_node = next(
-            (conn.to for conn in self.connections if conn.label == "false"), None
+            (conn.to for conn in self.connections if conn.label == ConnectionLabel.FALSE),
+            None,
         )
 
-    async def execute_async(self, state: dict, variables: dict, **kwargs):
-        # Implement the asynchronous execution logic f  or the condition node
+    async def execute_async(self, ctx: "ExecutionContext") -> None:
+        # ConditionNode only determines next nodes, doesn't execute logic
         pass
 
-    async def next_nodes(self, state, variables):
-        data = {**state, **variables}
+    async def next_nodes(self, ctx: "ExecutionContext") -> list["BaseNode"]:
+        # Combine state and node_context for condition evaluation
+        data = {**ctx.state, **ctx.node_context}
         result = jsonLogic(self.condition, data)
         if result:
             return [self.true_node] if self.true_node else []
@@ -44,5 +53,4 @@ class ConditionNode(BaseNode):
         return [self.false_node] if self.false_node else []
 
     def to_dict(self) -> dict:
-        # Implement serialization logic specific to ConditionNode
         return {**super().to_dict(), "condition": self.condition}

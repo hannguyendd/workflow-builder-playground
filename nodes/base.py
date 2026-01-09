@@ -1,7 +1,10 @@
 from abc import abstractmethod
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from nodes.connection import NodeConnection
+
+if TYPE_CHECKING:
+    from workflows.context import ExecutionContext
 
 
 class RawNode(TypedDict):
@@ -35,10 +38,10 @@ class BaseNode:
         return True
 
     @abstractmethod
-    async def execute_async(self, state: dict, variables: dict, **kwargs):
+    async def execute_async(self, ctx: "ExecutionContext") -> None:
         pass
 
-    async def next_nodes(self, state: dict, variables: dict) -> list["BaseNode"]:
+    async def next_nodes(self, ctx: "ExecutionContext") -> list["BaseNode"]:
         return [conn.to for conn in self.connections]
 
     def link(self, connections: list[NodeConnection]):
